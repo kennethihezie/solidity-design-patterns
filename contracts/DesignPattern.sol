@@ -78,51 +78,31 @@ contract DesignPattern {
       //requirements fail after execution.
       assert(address(this).balance == prevBalance - amount);
    }
-}
 
-//State machine contract
-// In the code snippet above, the Safe contract 
-// uses modifiers to update the state of the 
-// contract between various stages. The stages 
-// determine when deposits and withdrawals can be made. 
-// If the current state of the contract is not AcceptingDeposit, 
-// users can not deposit to the contract, and if the current 
-// state is not ReleasingDeposit, users can not withdraw 
-// from the contract.
-contract Safe {
-   enum Stages { AcceptingDeposits, FreezingDeposits, ReleasingDeposits }
-
-   Stages public stage = Stages.AcceptingDeposits;
-   uint public creationTime = block.timestamp;
-   mapping(address => uint) balances;
-
-   modifier atStage(Stages _stage) {
-      require(stage == _stage);
-      _;
+   //Randomness
+   // This method is predicatable. Use with care!
+   // The random() function below generates a random and unique integer 
+   // by hashing the block number (block.number, which is a variable on the blockchain).
+   function random() public view returns(uint rand){
+      rand = uint(blockhash(block.number - 1));
+      console.log("randome number: %s", rand);
+      return rand;
    }
 
-   modifier timedTransitions() {
-      if(stage == Stages.AcceptingDeposits && block.timestamp >= creationTime + 1 days){
-         nextStage();
-      }
-      if(stage == Stages.FreezingDeposits && block.timestamp >= creationTime + 4 days){
-         nextStage();
-      }
-      _;
-   }
+   //Events and Emit
+   //In Solidity, you'll see that events are defined using the 
+   //“event” keyword and are emitted using the “emit” keyword. 
+   //Placing the “indexed” keyword in front of a parameter 
+   //name will store it as a topic in the log record. 
+   //Without the keyword “indexed”, it will be stored as data
+   //refer to https://docs.soliditylang.org/en/v0.8.19/contracts.html#events for more info
+   event Deposit(address indexed from, string indexed id, uint value);
 
-   function nextStage() internal {
-      //jumps to the next stage
-      stage = Stages(uint(stage) + 1);
-   }
-
-   function deposit() public payable timedTransitions atStage(Stages.AcceptingDeposits) {
-      balances[msg.sender] += msg.value;
-   }
-
-   function withdraw() public timedTransitions atStage(Stages.ReleasingDeposits) {
-      uint amount = balances[msg.sender];
-      balances[msg.sender] = 0;
-      payable(msg.sender).transfer(amount);
+   function deposit(string memory id) public payable {
+      // Events are emitted using `emit`, followed by
+      // the name of the event and the arguments
+      emit Deposit(msg.sender, id, msg.value);
    }
 }
+
+//resume at Emergency stop.

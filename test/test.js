@@ -38,5 +38,18 @@ describe('Design Pattern', () => {
     it("contribute", async () => {
         await contract.methods.contribute(accounts[2]).send({from: accounts[0], value: '10'})
     })
+    it('generate a random number', async () => {
+        await contract.methods.random().call()
+    })
+    it('listen for changes in the event method', async () => {
+        await contract.events.Deposit((error, result) => {
+            if(!error){
+                console.log(result);
+            }
+        })
+
+        //call the deposit method
+        await contract.methods.deposit('collins').send({ from: accounts[0], value: '100' })
+    })
     
 })
